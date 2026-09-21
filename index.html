@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thitinut Punjumpol – Game and 3D developer intern</title>
+<meta name="description" content="Portfolio of Thitinut Punjumpol, game and 3D developer intern: 2D games made in Godot, and AR/VR experiences that run in the browser with A-Frame.">
+<meta name="theme-color" content="#0d1518">
+<meta property="og:title" content="Thitinut Punjumpol – Game and 3D developer intern">
+<meta property="og:description" content="2D games in Godot and AR/VR experiences that run in the browser.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/hero-scene.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A6%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ---------- Tokens ---------- */
+  :root {
+    --ink: #0d1518;          /* the dark of the hero scene */
+    --torch: #d4edf1;        /* flashlight white */
+    --paper: #e9eeec;        /* page background below the hero */
+    --paper-2: #dde5e2;      /* image wells, hover fills */
+    --text: #15211f;
+    --text-soft: #46544f;
+    --line: #b9c5c0;
+    --moss: #1f6f66;         /* links, buttons */
+    --moss-dark: #164f49;
+    --moss-tint: #9cc9c1;    /* hard offset shadows */
+
+    --display: "Pixelify Sans", "IBM Plex Sans Thai", ui-monospace, monospace;
+    --body: "IBM Plex Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --wrap: 1120px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scroll-padding-top: 1rem; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: var(--moss); text-underline-offset: .2em; }
+  a:hover { color: var(--moss-dark); }
+  :focus-visible { outline: 3px solid var(--moss); outline-offset: 3px; }
+  .hero :focus-visible { outline-color: var(--torch); }
+
+  .skip {
+    position: absolute; left: 1rem; top: -4rem;
+    background: var(--torch); color: var(--ink);
+    padding: .6rem 1rem; z-index: 10; text-decoration: none; font-weight: 600;
+  }
+  .skip:focus { top: 1rem; }
+
+  /* ---------- Hero: the flashlight ---------- */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex; flex-direction: column;
+    background: var(--ink);
+    color: var(--torch);
+    overflow: hidden;
+    isolation: isolate;
+    --x: 66%; --y: 42%; --r: 230px;
+    touch-action: pan-y;
+  }
+  .scene { position: absolute; inset: 0; z-index: -1; }
+  .scene img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 62% 30%;
+    image-rendering: pixelated;
+  }
+  .scene .dim { filter: brightness(.16) saturate(.7); }
+  .scene .lit {
+    -webkit-mask-image: radial-gradient(circle var(--r) at var(--x) var(--y), #000 0%, rgba(0,0,0,.6) 55%, transparent 100%);
+            mask-image: radial-gradient(circle var(--r) at var(--x) var(--y), #000 0%, rgba(0,0,0,.6) 55%, transparent 100%);
+  }
+  .scene::after { /* keeps the text readable wherever the light goes */
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(13,21,24,.96) 0%, rgba(13,21,24,.82) 34%, rgba(13,21,24,0) 66%);
+  }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: max(1.25rem, env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3rem) 0;
+    font-size: .95rem;
+  }
+  .topbar .mark { font-family: var(--display); font-weight: 700; font-size: 1.15rem; color: var(--torch); text-decoration: none; }
+  .topbar nav { display: flex; gap: clamp(1rem, 3vw, 2rem); flex-wrap: wrap; }
+  .topbar nav a { color: var(--torch); text-decoration: none; opacity: .85; }
+  .topbar nav a:hover { opacity: 1; text-decoration: underline; }
+
+  .hint {
+    margin: 1rem clamp(1.25rem, 4vw, 3rem) 0; align-self: flex-end;
+    font-size: .9rem; color: var(--torch); opacity: .7;
+    transition: opacity .6s;
+  }
+  .hint.gone { opacity: 0; }
+
+  .hero-copy {
+    margin-top: auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2rem, 6vh, 4rem);
+    max-width: calc(var(--wrap) + 6rem);
+  }
+  .hero h1 {
+    margin: 0;
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(2.6rem, 8.2vw, 6.25rem);
+    line-height: 1; letter-spacing: -.01em;
+    color: #f2fbfd;
+  }
+  .hero .th { margin: .5rem 0 0; font-size: clamp(1.15rem, 2.4vw, 1.6rem); color: var(--torch); opacity: .85; }
+  .hero .tagline { margin: 1.4rem 0 0; max-width: 34rem; font-size: clamp(1.05rem, 1.6vw, 1.25rem); color: #e4f3f6; }
+  .hero-links { display: flex; flex-wrap: wrap; gap: .9rem 1rem; margin-top: 1.75rem; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: .6rem;
+    padding: .7rem 1.15rem;
+    font: 600 1rem/1.2 var(--body);
+    color: var(--paper); background: var(--moss);
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--moss-tint);
+    text-decoration: none; cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .btn:hover { color: #fff; background: var(--moss-dark); transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--moss-tint); }
+  .btn.ghost { background: transparent; color: var(--torch); border-color: var(--torch); box-shadow: 4px 4px 0 rgba(212,237,241,.25); }
+  .btn.ghost:hover { background: rgba(212,237,241,.14); color: #fff; }
+  .link { font-weight: 500; }
+
+  /* ---------- Sections ---------- */
+  main > section { padding: clamp(3.5rem, 8vw, 6.5rem) clamp(1.25rem, 4vw, 3rem) 0; }
+  .wrap { max-width: var(--wrap); margin: 0 auto; }
+  h2 {
+    margin: 0; font-family: var(--display); font-weight: 700;
+    font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.1;
+  }
+  .section-intro { margin: .75rem 0 0; max-width: 36rem; color: var(--text-soft); }
+
+  /* ---------- Project rows ---------- */
+  .project {
+    display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: start;
+    padding: clamp(2.25rem, 5vw, 3.5rem) 0;
+    border-top: 1px solid var(--line);
+  }
+  .projects { margin-top: clamp(1.75rem, 4vw, 3rem); }
+  .projects .project:first-child { border-top: 3px solid var(--text); }
+  .project:nth-child(even) .shots { order: 2; }
+
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+  .shots .shot:first-child { grid-column: 1 / -1; }
+  .shots .shot:nth-child(2):last-child { grid-column: 1 / -1; }
+  .shot {
+    margin: 0; background: var(--ink);
+    border: 3px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--moss-tint);
+  }
+  .shots .shot:not(:first-child) { box-shadow: 4px 4px 0 var(--moss-tint); }
+  .shot img { width: 100%; height: auto; image-rendering: pixelated; }
+  .shot.photo img { image-rendering: auto; }
+  .shot.empty {
+    aspect-ratio: 16 / 9; display: grid; place-items: center; text-align: center; padding: 1rem;
+    color: var(--torch); font-size: .95rem;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(212,237,241,.28), transparent 46%),
+      var(--ink);
+  }
+
+  .project h3 { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 3vw, 2.1rem); line-height: 1.15; }
+  .project .lede { margin: .75rem 0 0; max-width: 34rem; }
+  .facts { margin: 1.25rem 0 0; display: grid; grid-template-columns: auto 1fr; gap: .35rem 1.1rem; font-size: .98rem; }
+  .facts dt { color: var(--text-soft); }
+  .facts dd { margin: 0; }
+  .feat { margin: 1.25rem 0 0; padding-left: 1.15rem; max-width: 34rem; }
+  .feat li { margin: .3rem 0; }
+  .note { margin: 1rem 0 0; font-size: .9rem; color: var(--text-soft); max-width: 34rem; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem 1.4rem; margin-top: 1.5rem; }
+
+  /* ---------- Background timeline ---------- */
+  .timeline { list-style: none; margin: clamp(1.75rem, 4vw, 3rem) 0 0; padding: 0; border-top: 3px solid var(--text); }
+  .timeline li {
+    display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 1rem 2rem;
+    padding: 1.1rem 0; border-bottom: 1px solid var(--line);
+  }
+  .timeline time { font-family: var(--display); font-weight: 500; font-size: 1.1rem; color: var(--text-soft); }
+  .timeline .what { font-weight: 600; }
+  .timeline .where { display: block; color: var(--text-soft); font-size: .96rem; }
+
+  .skills { margin: clamp(2rem, 4vw, 3rem) 0 0; display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .6rem 2rem; }
+  .skills dt { font-family: var(--display); font-weight: 500; font-size: 1.1rem; color: var(--text-soft); }
+  .skills dd { margin: 0; }
+
+  /* ---------- Certificates and grades ---------- */
+  .grades {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+    margin-top: clamp(1.75rem, 4vw, 3rem);
+    padding: 1.75rem 0; border-top: 3px solid var(--text); border-bottom: 1px solid var(--line);
+  }
+  .gpa { font-family: var(--display); font-weight: 700; font-size: clamp(3.5rem, 9vw, 5.5rem); line-height: 1; }
+  .gpa small { font-size: 1.1rem; font-weight: 500; color: var(--text-soft); margin-left: .35rem; }
+  .grades p { margin: 0; max-width: 34rem; }
+  .grades .actions { margin-top: 1rem; }
+
+  .certs-h { margin: clamp(2.25rem, 5vw, 3.25rem) 0 0; font-family: var(--display); font-weight: 700; font-size: 1.5rem; }
+  .certs {
+    list-style: none; margin: 1.25rem 0 0; padding: 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 1.75rem 1.5rem;
+  }
+  .cert { display: block; color: inherit; text-decoration: none; }
+  .cert .thumb {
+    display: block; background: #fff; border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--moss-tint);
+    aspect-ratio: 1.414 / 1; overflow: hidden;
+  }
+  .cert .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .cert:hover .thumb { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--moss-tint); }
+  .cert .thumb { transition: transform .12s, box-shadow .12s; }
+  .cert .name { display: block; margin-top: .85rem; font-weight: 600; line-height: 1.35; }
+  .cert .meta { display: block; color: var(--text-soft); font-size: .93rem; }
+  .cert:hover .name { text-decoration: underline; text-underline-offset: .2em; }
+
+  dialog.viewer {
+    padding: 0; border: 3px solid var(--ink); background: var(--paper);
+    width: min(1100px, 94vw); max-height: 94vh; overflow: auto; color: var(--text);
+  }
+  dialog.viewer::backdrop { background: rgba(13, 21, 24, .86); }
+  .viewer img { width: 100%; height: auto; display: block; background: #fff; }
+  .viewer .bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .75rem 1rem; border-top: 3px solid var(--ink); }
+  .viewer .bar p { margin: 0; font-weight: 600; }
+  .viewer .close { font: inherit; font-weight: 600; padding: .4rem .9rem; border: 3px solid var(--ink); background: var(--moss); color: var(--paper); cursor: pointer; }
+  .viewer .close:hover { background: var(--moss-dark); }
+
+  /* ---------- Contact ---------- */
+  footer { padding: clamp(4rem, 9vw, 7rem) clamp(1.25rem, 4vw, 3rem) max(3rem, env(safe-area-inset-bottom)); }
+  footer .wrap { border-top: 3px solid var(--text); padding-top: 2rem; }
+  footer h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+  footer p { margin: .75rem 0 0; color: var(--text-soft); max-width: 34rem; }
+  footer .actions { margin-top: 1.5rem; }
+  .updated { margin-top: 3rem; font-size: .9rem; color: var(--text-soft); }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 860px) {
+    .project { grid-template-columns: 1fr; }
+    .project:nth-child(even) .shots { order: 0; }
+    .timeline li, .skills { grid-template-columns: 1fr; gap: .2rem; }
+    .grades { grid-template-columns: 1fr; }
+    .skills dd { margin-bottom: .8rem; }
+    .hint { align-self: flex-start; }
+    .hero { --r: 170px; --x: 50%; --y: 40%; }
+  }
+  @media (max-width: 560px) {
+    .topbar .mark { display: none; }
+    .topbar nav { gap: .5rem 1.25rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .btn, .hint, .cert .thumb { transition: none; }
+  }
+</style>
+</head>
+
+<body>
+<a class="skip" href="#games">Skip to work</a>
+
+<header class="hero" id="top">
+  <div class="scene" aria-hidden="true">
+    <img class="dim" src="assets/hero-scene.png" alt="">
+    <img class="lit" src="assets/hero-scene.png" alt="">
+  </div>
+
+  <div class="topbar">
+    <a class="mark" href="#top">Thitinut P.</a>
+    <nav aria-label="Sections">
+      <a href="#games">Games</a>
+      <a href="#ar-vr">AR / VR</a>
+      <a href="#background">Background</a>
+      <a href="#certificates">Certificates</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+  <p class="hint" id="hint">Move the flashlight with your pointer or finger.</p>
+
+  <div class="hero-copy">
+    <h1>Thitinut Punjumpol</h1>
+    <p class="th" lang="th">ฐิติณัฏฐ์ ปัญจุมพล</p>
+    <p class="tagline">Game and 3D developer intern. I make 2D games in Godot and AR/VR experiences that run in the browser.</p>
+    <div class="hero-links">
+      <a class="btn" href="mailto:aom.punjunpol@gmail.com">Email me</a>
+      <a class="btn ghost" href="https://github.com/Symfa1l" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn ghost" href="Resume_Thitinut_Punjumpol.pdf">Résumé (PDF)</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ===================== GAMES ===================== -->
+  <section id="games" aria-labelledby="games-h">
+    <div class="wrap">
+      <h2 id="games-h">Games</h2>
+      <p class="section-intro">Two 2D games made in Godot: one on my own, one with a team in 48 hours.</p>
+
+      <div class="projects">
+
+        <!-- Adventure Clock -->
+        <article class="project">
+          <div class="shots">
+            <figure class="shot"><img src="assets/ac-menu.png" width="1280" height="721" alt="Adventure Clock main menu: a knight with a blue plume looks over a valley at sunset, with New Game, Load, Settings and Exit buttons."></figure>
+            <figure class="shot"><img src="assets/ac-play.png" width="1280" height="721" alt="Adventure Clock gameplay: the knight fights goblins with torches and dynamite among huts and pine trees, with a health bar and level counter." loading="lazy"></figure>
+            <figure class="shot"><img src="assets/ac-gameover.png" width="1280" height="725" alt="Adventure Clock game over screen with Replay and Main Menu buttons." loading="lazy"></figure>
+          </div>
+          <div>
+            <h3>Adventure Clock</h3>
+            <p class="lede">A top-down action RPG. Pick a class, clear three maps and fight through to the end.</p>
+            <dl class="facts">
+              <dt>Made with</dt><dd>Godot 4, GDScript</dd>
+              <dt>Team</dt><dd>Solo project</dd>
+              <dt>My part</dt><dd>Game design, programming and level setup</dd>
+            </dl>
+            <ul class="feat">
+              <li>Four classes you can switch between: sword, spear, bow and healer</li>
+              <li>Twenty levels of XP with damage and health that grow each level</li>
+              <li>Eight-plus enemy types driven by a state machine and pathfinding</li>
+              <li>Save and load, cutscenes, and warp points that open once a map is cleared</li>
+            </ul>
+            <div class="actions">
+              <a class="btn" data-link="adventureClockPlay">Play on itch.io</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Sheet Mask Ghost -->
+        <article class="project">
+          <div class="shots">
+            <figure class="shot"><img src="assets/smg-1.png" width="640" height="359" alt="Sheet Mask Ghost: a girl with a flashlight in a dark tiled room with bloodstains."></figure>
+            <figure class="shot"><img src="assets/smg-2.png" width="640" height="359" alt="Sheet Mask Ghost: the flashlight beam in a dark corridor, with a ghost lurking below." loading="lazy"></figure>
+          </div>
+          <div>
+            <h3>Sheet Mask Ghost</h3>
+            <p class="lede">A horror exploration game. Search a hospital and its surroundings with a flashlight, collect keys, read notes and stun ghosts with masks to find the exit.</p>
+            <dl class="facts">
+              <dt>Made with</dt><dd>Godot 4</dd>
+              <dt>Event</dt><dd>Global Game Jam 2026, Chiang Mai, 48 hours</dd>
+              <dt>Team</dt><dd>4 people</dd>
+              <dt>My part</dt><dd>Game design, level layout, player controller, flashlight and scene transitions</dd>
+            </dl>
+            <ul class="feat">
+              <li>Five areas: outdoor world, cliff side, store, basement and patient room</li>
+              <li>Flashlight with a flicker effect, notes to read and mystery boxes to open</li>
+            </ul>
+            <div class="actions">
+              <a class="btn" data-link="smgPlay">Play the game</a>
+              <a class="link" data-link="smgJamPage">Game Jam page</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== AR / VR ===================== -->
+  <section id="ar-vr" aria-labelledby="arvr-h">
+    <div class="wrap">
+      <h2 id="arvr-h">AR / VR</h2>
+      <p class="section-intro">Two solo projects built with A-Frame. They run in a browser, so there is nothing to install.</p>
+
+      <div class="projects">
+
+        <article class="project">
+          <div class="shots">
+            <figure class="shot photo"><img src="assets/ar-1.png" width="767" height="413" alt="Solar System AR: a 3D Sun over a webcam view, with buttons to move between planets, zoom and pause."></figure>
+            <figure class="shot photo"><img src="assets/ar-2.png" width="1280" height="692" alt="Solar System AR start screen in Thai: a title about a grand tour of the solar system and a button to begin the journey." loading="lazy"></figure>
+          </div>
+          <div>
+            <h3>Solar System AR</h3>
+            <p class="lede">A markerless AR solar system for the classroom. Fly between the Sun and eight planets over your camera view and read the facts in Thai.</p>
+            <dl class="facts">
+              <dt>Made with</dt><dd>A-Frame, AR.js</dd>
+              <dt>Team</dt><dd>Solo project</dd>
+            </dl>
+            <ul class="feat">
+              <li>Nine 3D models, each spinning, with an animated camera flight between them</li>
+              <li>Zoom, pause and a Thai info panel for every planet</li>
+              <li>Teacher mode adds extra notes and pauses the spin while you explain</li>
+            </ul>
+            <p class="note">Allow camera access when asked. Open it on a phone or a laptop with a webcam.</p>
+            <div class="actions">
+              <a class="btn" data-link="arDemo">Open live demo</a>
+              <a class="link" data-link="arSource">Source code</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="project">
+          <div class="shots">
+            <figure class="shot photo"><img src="assets/vr-1.jpg" width="1280" height="672" alt="Digimon Digital World VR: Agumon, Gabumon and V-mon on three colored evolution stations, each with a terminal."></figure>
+            <figure class="shot photo"><img src="assets/vr-2.jpg" width="1280" height="685" alt="Digimon Digital World VR start screen: Digital Dive Protocol with an Initialize Dive button." loading="lazy"></figure>
+            <figure class="shot photo"><img src="assets/vr-3.jpg" width="1280" height="690" alt="Digimon Digital World VR intro: a desk monitor shows a terminal line saying linking to the Digital World." loading="lazy"></figure>
+          </div>
+          <div>
+            <h3>Digimon Digital World VR</h3>
+            <p class="lede">A WebXR scene where you enter the Digital World, evolve Digimon at three stations and fuse WarGreymon and MetalGarurumon into Omegamon.</p>
+            <dl class="facts">
+              <dt>Made with</dt><dd>A-Frame, WebXR</dd>
+              <dt>Team</dt><dd>Solo project</dd>
+            </dl>
+            <ul class="feat">
+              <li>Intro sequence with a typed terminal, a gate and a wormhole tunnel</li>
+              <li>Fourteen 3D models, a cutscene for every evolution and audio controls</li>
+              <li>Custom components for auto-fitting models, the lab boundary, stations and fusion</li>
+            </ul>
+            <p class="note">A fan tribute made for coursework. The characters, music and clips belong to their owners.</p>
+            <div class="actions">
+              <a class="btn" data-link="vrDemo">Open live demo</a>
+              <a class="link" data-link="vrSource">Source code</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BACKGROUND ===================== -->
+  <section id="background" aria-labelledby="bg-h">
+    <div class="wrap">
+      <h2 id="bg-h">Background</h2>
+      <p class="section-intro">Study, training and game jams, newest first.</p>
+
+      <ol class="timeline">
+        <li>
+          <time>2023 – now</time>
+          <div><span class="what">B.Sc. Computer Science, year 4</span>
+            <span class="where">Pibulsongkram Rajabhat University, Phitsanulok. GPA 3.90. Expected graduation May 2027.</span></div>
+        </li>
+        <li>
+          <time>Jun 2026</time>
+          <div><span class="what">Secure Software Development and Application Security</span>
+            <span class="where">Two-day workshop, 16 hours</span></div>
+        </li>
+        <li>
+          <time>Feb 2026</time>
+          <div><span class="what">Game developer training, level 4</span>
+            <span class="where">Digital industry occupational standard, 18 hours</span></div>
+        </li>
+        <li>
+          <time>Jan 2026</time>
+          <div><span class="what">Global Game Jam 2026, Chiang Mai</span>
+            <span class="where">Made Sheet Mask Ghost with a team of four in 48 hours</span></div>
+        </li>
+        <li>
+          <time>Aug 2025</time>
+          <div><span class="what">Software Development Concepts and Testing with Python</span>
+            <span class="where">Samsung Innovation Campus</span></div>
+        </li>
+        <li>
+          <time>May – Jun 2025</time>
+          <div><span class="what">NCSA CTF Boot Camp</span>
+            <span class="where">Cyber security workshops, online and in Phitsanulok</span></div>
+        </li>
+      </ol>
+
+      <dl class="skills">
+        <dt>Languages</dt><dd>GDScript, C#, JavaScript, Python</dd>
+        <dt>Engines</dt><dd>Godot, Unity, A-Frame, Three.js, AR.js, WebXR</dd>
+        <dt>Tools</dt><dd>Git and GitHub, Blender (basics)</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ===================== CERTIFICATES AND GRADES ===================== -->
+  <section id="certificates" aria-labelledby="cert-h">
+    <div class="wrap">
+      <h2 id="cert-h">Certificates and grades</h2>
+      <p class="section-intro">Select a certificate to see it in full size.</p>
+
+      <div class="grades">
+        <div class="gpa" aria-label="GPA 3.90 out of 4.00">3.90<small>/ 4.00</small></div>
+        <div>
+          <p>Grade point average in B.Sc. Computer Science, Pibulsongkram Rajabhat University. Now in year 4, expected to graduate in May 2027.</p>
+          <div class="actions"><a class="btn" data-link="transcript">View transcript</a></div>
+        </div>
+      </div>
+
+      <h3 class="certs-h">Games and software</h3>
+      <ul class="certs">
+          <li><a class="cert" href="assets/certs/game-dev-training.jpg" data-caption="Game developer training, level 4">
+            <span class="thumb"><img src="assets/certs/game-dev-training-thumb.jpg" alt="Certificate of attendance for game developer training, level 4, February 2026." loading="lazy"></span>
+            <span class="name">Game developer training, level 4</span><span class="meta">Feb 2026, 18 hours. Digital industry occupational standard</span></a></li>
+          <li><a class="cert" href="assets/certs/secure-software-dev.jpg" data-caption="Secure Software Development and Application Security">
+            <span class="thumb"><img src="assets/certs/secure-software-dev-thumb.jpg" alt="Certificate for the secure software development and application security workshop, June 2026." loading="lazy"></span>
+            <span class="name">Secure Software Development and Application Security</span><span class="meta">Jun 2026, 16 hours</span></a></li>
+          <li><a class="cert" href="assets/certs/samsung-python.jpg" data-caption="Software Development Concepts and Testing with Python">
+            <span class="thumb"><img src="assets/certs/samsung-python-thumb.jpg" alt="Samsung Innovation Campus certificate of completion for Software Development Concepts and Testing with Python." loading="lazy"></span>
+            <span class="name">Software Development Concepts and Testing with Python</span><span class="meta">Aug 2025. Samsung Innovation Campus</span></a></li>
+      </ul>
+
+      <h3 class="certs-h">Cyber security and other training</h3>
+      <ul class="certs">
+          <li><a class="cert" href="assets/certs/ctf-bootcamp-1.jpg" data-caption="NCSA CTF Boot Camp, batch 1">
+            <span class="thumb"><img src="assets/certs/ctf-bootcamp-1-thumb.jpg" alt="Certificate for NCSA CTF Boot Camp batch 1, June 2025." loading="lazy"></span>
+            <span class="name">NCSA CTF Boot Camp, batch 1</span><span class="meta">Jun 2025. Workshop in Phitsanulok</span></a></li>
+          <li><a class="cert" href="assets/certs/ctf-bootcamp-online.jpg" data-caption="NCSA CTF Boot Camp and cyber career guidance">
+            <span class="thumb"><img src="assets/certs/ctf-bootcamp-online-thumb.jpg" alt="Certificate for the online NCSA CTF Boot Camp and career guidance, May 2025." loading="lazy"></span>
+            <span class="name">NCSA CTF Boot Camp and cyber career guidance</span><span class="meta">May 2025. Online workshop</span></a></li>
+          <li><a class="cert" href="assets/certs/samsung-ai.jpg" data-caption="Introduction to Artificial Intelligence in the Workplace">
+            <span class="thumb"><img src="assets/certs/samsung-ai-thumb.jpg" alt="Samsung Innovation Campus certificate of completion for Introduction to Artificial Intelligence in the Workplace." loading="lazy"></span>
+            <span class="name">Introduction to Artificial Intelligence in the Workplace</span><span class="meta">Aug 2025. Samsung Innovation Campus</span></a></li>
+          <li><a class="cert" href="assets/certs/thai-mooc-it-pm.jpg" data-caption="Professional IT Project Management">
+            <span class="thumb"><img src="assets/certs/thai-mooc-it-pm-thumb.jpg" alt="Thai MOOC certificate of completion for Professional IT Project Management." loading="lazy"></span>
+            <span class="name">Professional IT Project Management</span><span class="meta">Aug 2025, 3 hours. Thai MOOC</span></a></li>
+          <li><a class="cert" href="assets/certs/prompt-engineer.jpg" data-caption="Prompt Engineer workshop">
+            <span class="thumb"><img src="assets/certs/prompt-engineer-thumb.jpg" alt="Certificate for the Prompt Engineer workshop, July 2024." loading="lazy"></span>
+            <span class="name">Prompt Engineer workshop</span><span class="meta">Jul 2024, 6 hours. PSRU</span></a></li>
+          <li><a class="cert" href="assets/certs/canva.jpg" data-caption="Canva for Online Class">
+            <span class="thumb"><img src="assets/certs/canva-thumb.jpg" alt="Certificate for the Canva for Online Class course, early 2025." loading="lazy"></span>
+            <span class="name">Canva for Online Class</span><span class="meta">Jan to Feb 2025, 3 hours. PSRU</span></a></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<dialog class="viewer" id="viewer" aria-label="Certificate viewer">
+  <img id="viewerImg" src="" alt="">
+  <div class="bar">
+    <p id="viewerCaption"></p>
+    <button class="close" id="viewerClose" type="button">Close</button>
+  </div>
+</dialog>
+
+<footer id="contact">
+  <div class="wrap">
+    <h2>Let's talk</h2>
+    <p>I am looking for a game or 3D developer internship. Email is the fastest way to reach me.</p>
+    <div class="actions">
+      <a class="btn" href="mailto:aom.punjunpol@gmail.com">aom.punjunpol@gmail.com</a>
+      <a class="link" href="https://github.com/Symfa1l" target="_blank" rel="noopener">GitHub</a>
+      <a class="link" data-link="itch">itch.io profile</a>
+      <a class="link" href="Resume_Thitinut_Punjumpol.pdf">Résumé (PDF)</a>
+    </div>
+    <p class="updated">Updated September 2026.</p>
+  </div>
+</footer>
+
+<script>
+  /* =====================================================================
+     EDIT HERE: paste your links between the quotes.
+     Leave a link empty ("") and its button still shows but does nothing until you add a URL.
+     ===================================================================== */
+  const LINKS = {
+    adventureClockPlay:   "https://pandoraras.itch.io/adventure-clock",  // your itch.io page for Adventure Clock
+    smgPlay:              "https://biwkomchan.itch.io/sheet-mask-ghost",  // itch.io or GitHub Releases download
+    smgJamPage:           "https://globalgamejam.org/games/2026/sheet-mask-ghost-6",  // Global Game Jam page for Sheet Mask Ghost
+    arDemo:               "https://symfa1l.github.io/Solar-system_AR/",  // GitHub Pages link for Solar System AR (must be https)
+    arSource:             "https://github.com/Symfa1l/Solar-system_AR",  // GitHub repo
+    vrDemo:               "https://symfa1l.github.io/Digimon_VR/",  // GitHub Pages link for the Digimon VR scene
+    vrSource:             "https://github.com/Symfa1l/Digimon_VR",  // GitHub repo
+    transcript:           "",  // link or file for your transcript, e.g. "assets/transcript.pdf"
+    itch:                 ""   // your itch.io profile
+  };
+
+  document.querySelectorAll("[data-link]").forEach(function (el) {
+    var url = LINKS[el.dataset.link];
+    if (url) {
+      el.href = url; el.target = "_blank"; el.rel = "noopener";
+    } else {
+      el.href = "#";      // no URL yet: the button still shows, just does nothing
+      el.addEventListener("click", function (e) { e.preventDefault(); });
+    }
+  });
+
+  /* ---------- Flashlight ---------- */
+  (function () {
+    var hero = document.getElementById("top");
+    var hint = document.getElementById("hint");
+    var calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var base = parseFloat(getComputedStyle(hero).getPropertyValue("--r")) || 220;
+
+    function aim(e) {
+      var b = hero.getBoundingClientRect();
+      hero.style.setProperty("--x", (e.clientX - b.left) + "px");
+      hero.style.setProperty("--y", (e.clientY - b.top) + "px");
+      hint.classList.add("gone");
+    }
+    hero.addEventListener("pointermove", aim);
+    hero.addEventListener("pointerdown", aim);
+
+    if (!calm) {           // the same random flicker the flashlight has in the game
+      setInterval(function () {
+        var r = base + (Math.random() * 2 - 1) * base * 0.06;
+        hero.style.setProperty("--r", r.toFixed(1) + "px");
+      }, 110);
+    }
+  })();
+  /* ---------- Certificate viewer ---------- */
+  (function () {
+    var box = document.getElementById("viewer");
+    if (!box || typeof box.showModal !== "function") return;   // links open the image normally
+    var img = document.getElementById("viewerImg");
+    var cap = document.getElementById("viewerCaption");
+    document.querySelectorAll(".cert").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        img.src = a.getAttribute("href");
+        img.alt = a.querySelector("img").alt;
+        cap.textContent = a.dataset.caption;
+        box.showModal();
+      });
+    });
+    document.getElementById("viewerClose").addEventListener("click", function () { box.close(); });
+    box.addEventListener("click", function (e) { if (e.target === box) box.close(); });
+  })();
+</script>
+</body>
+</html>
