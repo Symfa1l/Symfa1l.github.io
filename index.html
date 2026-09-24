@@ -166,6 +166,8 @@
   .shots .shot:not(:first-child) { box-shadow: 4px 4px 0 var(--moss-tint); }
   .shot img { width: 100%; height: auto; image-rendering: pixelated; }
   .shot.photo img { image-rendering: auto; }
+  .shot.embed3d { aspect-ratio: 4 / 3; }
+  .shot.embed3d iframe { width: 100%; height: 100%; border: 0; display: block; }
   .shot.empty {
     aspect-ratio: 16 / 9; display: grid; place-items: center; text-align: center; padding: 1rem;
     color: var(--torch); font-size: .95rem;
@@ -283,6 +285,7 @@
     <nav aria-label="Sections">
       <a href="#games">Games</a>
       <a href="#ar-vr">AR / VR</a>
+      <a href="#3d-art">3D Art</a>
       <a href="#background">Background</a>
       <a href="#certificates">Certificates</a>
       <a href="#contact">Contact</a>
@@ -432,6 +435,36 @@
     </div>
   </section>
 
+  <!-- ===================== 3D ART ===================== -->
+  <section id="3d-art" aria-labelledby="art-h">
+    <div class="wrap">
+      <h2 id="art-h">3D Art</h2>
+      <p class="section-intro">Character sculpting practice from a couple of years back, before I moved into development.</p>
+
+      <div class="projects">
+        <article class="project">
+          <div class="shots">
+            <figure class="shot embed3d">
+              <iframe title="Ultraman Cosmos 3D model, view on Sketchfab" src="https://sketchfab.com/models/4b1e0b743263457da7b62cbf99739f40/embed" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share loading="lazy"></iframe>
+            </figure>
+          </div>
+          <div>
+            <h3>Ultraman Cosmos</h3>
+            <p class="lede">A character sculpt made for practice, back when I was still actively sculpting. Kept here to show the modelling fundamentals behind the 3D work I do now.</p>
+            <dl class="facts">
+              <dt>Made with</dt><dd>ZBrush</dd>
+              <dt>Team</dt><dd>Solo, personal practice</dd>
+            </dl>
+            <p class="note">Fan art made for practice, not for commercial use. Ultraman Cosmos belongs to Tsuburaya Productions.</p>
+            <div class="actions">
+              <a class="link" href="https://sketchfab.com/3d-models/ultraman-cosmos-4b1e0b743263457da7b62cbf99739f40" target="_blank" rel="noopener">View on Sketchfab</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== BACKGROUND ===================== -->
   <section id="background" aria-labelledby="bg-h">
     <div class="wrap">
@@ -567,7 +600,7 @@
     vrDemo:               "https://symfa1l.github.io/Digimon_VR/",  // GitHub Pages link for the Digimon VR scene
     vrSource:             "https://github.com/Symfa1l/Digimon_VR",  // GitHub repo
     transcript:           "",  // link or file for your transcript, e.g. "assets/transcript.pdf"
-    itch:                 "https://pandoraras.itch.io/"   // your itch.io profile
+    itch:                 ""   // your itch.io profile
   };
 
   document.querySelectorAll("[data-link]").forEach(function (el) {
